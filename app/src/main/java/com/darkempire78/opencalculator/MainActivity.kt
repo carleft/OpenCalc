@@ -24,6 +24,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.darkempire78.opencalculator.databinding.ActivityMainBinding
+import com.darkempire78.opencalculator.stat.StatActivity
 import com.sothree.slidinguppanel.PanelSlideListener
 import com.sothree.slidinguppanel.PanelState
 import kotlinx.coroutines.Dispatchers
@@ -280,6 +281,11 @@ class MainActivity : AppCompatActivity() {
         MyPreferences(this@MainActivity).saveHistory(this@MainActivity, mutableListOf())
         // Clear drawer
         historyAdapter.clearHistory()
+    }
+
+    fun openStat(menuItem: MenuItem) {
+        val intent = Intent(this, StatActivity::class.java)
+        startActivity(intent, null)
     }
 
     private fun keyVibration(view: View) {

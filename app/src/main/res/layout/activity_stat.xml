@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|center_horizontal"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:layout_marginTop="50dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:text="工作记录"
+            android:textSize="20sp"
+            android:layout_marginBottom="30dp" />
+
+        <EditText
+            android:id="@+id/date_picker"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="请输入日期"
+            android:focusable="false"
+            android:maxLines="1"
+            android:layout_marginBottom="20dp"/>
+
+        <EditText
+            android:id="@+id/workstation_id"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="请输入工位"
+            android:focusable="true"
+            android:maxLines="1"
+            android:layout_marginBottom="20dp"/>
+
+        <EditText
+            android:id="@+id/time_picker"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:focusable="false"
+            android:hint="请输入工作时长"
+            android:maxLines="1"
+            android:layout_marginBottom="20dp"/>
+
+        <EditText
+            android:id="@+id/work_times"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:focusable="true"
+            android:hint="请输入工作次数"
+            android:maxLines="1"
+            android:inputType="number"
+            android:layout_marginBottom="20dp"/>
+
+        <EditText
+            android:id="@+id/work_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:focusable="true"
+            android:hint="请输入工作内容"
+            android:maxLines="1"
+            android:layout_marginBottom="20dp"/>
+
+        <CheckBox
+            android:id="@+id/check_overtime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="是否为加班"
+            android:layout_marginBottom="20dp"/>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="20dp">
+
+            <Button
+                android:id="@+id/save"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="保存记录"
+                android:onClick="saveData"
+                android:layout_marginRight="30dp"/>
+
+            <Button
+                android:id="@+id/output"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="输出Excel"
+                android:onClick="outputExcel" />
+
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/open"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="打开文件目录"
+            android:visibility="gone"
+            android:onClick="openExcelPath" />
+
+    </LinearLayout>
+
+</FrameLayout>

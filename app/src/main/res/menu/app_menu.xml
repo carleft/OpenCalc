@@ -10,8 +10,15 @@
         android:title="@string/menu_settings"
         android:onClick="openSettings" />
 
+<!--    <item-->
+<!--        android:id="@+id/app_menu_about_button"-->
+<!--        android:title="@string/menu_about"-->
+<!--        android:onClick="openAbout"-->
+<!--        />-->
+
     <item
-        android:id="@+id/app_menu_about_button"
-        android:title="@string/menu_about"
-        android:onClick="openAbout" />
+        android:id="@+id/app_menu_stat_button"
+        android:title="工作记录"
+        android:onClick="openStat"
+        />
 </menu>
