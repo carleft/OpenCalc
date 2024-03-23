@@ -116,7 +116,7 @@ class StatActivity : AppCompatActivity() {
                 return@launch
             }
 
-            val times = binding.workTimes.text?.toString()?.toInt() ?: run {
+            val times = binding.workTimes.text?.toString()?.toIntOrNull() ?: run {
                 toast("工作次数不可为空！")
                 return@launch
             }

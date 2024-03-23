@@ -132,6 +132,64 @@
                     android:layout_marginBottom="1dp">
 
                     <Button
+                        android:id="@+id/hourButton"
+                        style="@style/CalculatorButton.Function"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_margin="0dp"
+                        android:layout_weight="1"
+                        android:onClick="hourButton"
+                        android:text="@string/hour"
+                        android:textSize="@dimen/button_text_size"/>
+
+                    <Button
+                        android:id="@+id/minButton"
+                        style="@style/CalculatorButton.Function"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_margin="0dp"
+                        android:layout_weight="1"
+                        android:onClick="minButton"
+                        android:text="@string/min"
+                        android:textSize="@dimen/button_text_size"/>
+
+                    <Button
+                        android:id="@+id/secButton"
+                        style="@style/CalculatorButton.Function"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_margin="0dp"
+                        android:layout_weight="1"
+                        android:onClick="secButton"
+                        android:text="@string/sec"
+                        android:textSize="@dimen/button_text_size"/>
+
+                    <ImageButton
+                        android:id="@+id/scientistModeSwitchButton"
+                        style="@style/Widget.AppCompat.Button.Borderless"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_margin="0dp"
+                        android:layout_weight="0.6"
+                        android:background="@drawable/circle"
+                        android:backgroundTint="?attr/foreground_color"
+                        android:fontFamily="@style/RobotoFontCondensedLight"
+                        android:onClick="scientistModeSwitchButton"
+                        android:textAllCaps="false"
+                        android:textColor="?attr/text_color"
+                        android:textSize="50sp"
+                        app:srcCompat="@drawable/ic_baseline_keyboard_arrow_down_24"
+                        tools:ignore="SpeakableTextPresentCheck" />
+
+                </TableRow>
+
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0"
+                    android:layout_marginBottom="1dp">
+
+                    <Button
                         android:id="@+id/squareButton"
                         style="@style/CalculatorButton.Function"
                         android:layout_width="0dp"
@@ -174,22 +232,13 @@
                         android:onClick="factorialButton"
                         android:text="@string/factorial"/>
 
-                    <ImageButton
-                        android:id="@+id/scientistModeSwitchButton"
-                        style="@style/Widget.AppCompat.Button.Borderless"
+                    <Space
+                        android:id="@+id/emptyScientistMode0"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_margin="0dp"
-                        android:layout_weight="0.6"
-                        android:background="@drawable/circle"
-                        android:backgroundTint="?attr/foreground_color"
-                        android:fontFamily="@style/RobotoFontCondensedLight"
-                        android:onClick="scientistModeSwitchButton"
-                        android:textAllCaps="false"
-                        android:textColor="?attr/text_color"
-                        android:textSize="50sp"
-                        app:srcCompat="@drawable/ic_baseline_keyboard_arrow_down_24"
-                        tools:ignore="SpeakableTextPresentCheck" />
+                        android:layout_weight="0.6" />
+
 
                 </TableRow>
 

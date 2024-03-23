@@ -25,6 +25,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.darkempire78.opencalculator.databinding.ActivityMainBinding
 import com.darkempire78.opencalculator.stat.StatActivity
+import com.darkempire78.opencalculator.timecalc.*
 import com.sothree.slidinguppanel.PanelSlideListener
 import com.sothree.slidinguppanel.PanelState
 import kotlinx.coroutines.Dispatchers
@@ -53,6 +54,7 @@ class MainActivity : AppCompatActivity() {
     private var errorStatusOld = false
 
     private var calculationResult = BigDecimal.ZERO
+    private var timeResult = ""
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var historyAdapter: HistoryAdapter
@@ -159,7 +161,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Focus by default
-        binding.input.requestFocus()
+//        binding.input.requestFocus()
+        binding.input.isFocusable = false;
+        binding.input.setCursorVisible(false);
 
         // Makes the input take the whole width of the screen by default
         val screenWidthPX = resources.displayMetrics.widthPixels
@@ -173,9 +177,9 @@ class MainActivity : AppCompatActivity() {
                 if (eventType == AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED) {
                     isEqualLastAction = false
                 }
-                if (!binding.input.isCursorVisible) {
-                    binding.input.isCursorVisible = true
-                }
+//                if (!binding.input.isCursorVisible) {
+//                    binding.input.isCursorVisible = true
+//                }
             }
         }
 
@@ -329,65 +333,94 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateDisplay(view: View, value: String) {
+        //去除分组分隔符
         val valueNoSeparators = value.replace(groupingSeparatorSymbol, "")
+        //是否为整数值
         val isValueInt = valueNoSeparators.toIntOrNull() != null
 
+        // 如果上一个符号是等号
         // Reset input with current number if following "equal"
         if (isEqualLastAction) {
             if (isValueInt || value == decimalSeparatorSymbol) {
+                //上一个符号是等号且输入是数字或者小数点，则先清空
+                //例如上次算了7+8=15，再点6的话，会先清空，之后再输出6
                 binding.input.setText("")
             } else {
+                //否则将光标移动到最右侧
+                //例如我上次算了7+8=15，再点+的话，会保留15并且直接将光标移动到最后，之后再输出+
                 binding.input.setSelection(binding.input.text.length)
                 binding.inputHorizontalScrollView.fullScroll(HorizontalScrollView.FOCUS_RIGHT)
             }
             isEqualLastAction = false
         }
 
-        if (!binding.input.isCursorVisible) {
-            binding.input.isCursorVisible = true
-        }
+//        //如果输入框的光标不可见，则设置为可见
+//        if (!binding.input.isCursorVisible) {
+//            binding.input.isCursorVisible = true
+//        }
 
         lifecycleScope.launch(Dispatchers.Default) {
             withContext(Dispatchers.Main) {
+                //按键时振动
                 // Vibrate when key pressed
                 keyVibration(view)
             }
 
+            //当前输入框的值
             val formerValue = binding.input.text.toString()
+            //光标位置
             val cursorPosition = binding.input.selectionStart
+            //光标左侧的值
             val leftValue = formerValue.subSequence(0, cursorPosition).toString()
+            //左侧值格式化
             val leftValueFormatted =
                 NumberFormatter.format(leftValue, decimalSeparatorSymbol, groupingSeparatorSymbol)
+            //光标右侧值
             val rightValue = formerValue.subSequence(cursorPosition, formerValue.length).toString()
 
+            //最新值 = 左侧值 + 插入值 + 右侧值
             val newValue = leftValue + value + rightValue
 
+            //处理时间输入相关冲突
+            if (timeConflict(leftValueFormatted, value)) {
+                return@launch
+            }
+
+
+            //最新值格式化
             var newValueFormatted =
                 NumberFormatter.format(newValue, decimalSeparatorSymbol, groupingSeparatorSymbol)
 
             withContext(Dispatchers.Main) {
+                // 当点击小数点按钮时，避免在相同数字中出现两个小数点
                 // Avoid two decimalSeparator in the same number
                 // when you click on the decimalSeparator button
                 if (value == decimalSeparatorSymbol && decimalSeparatorSymbol in binding.input.text.toString()) {
+                    // 如果输入框中有内容
                     if (binding.input.text.toString().isNotEmpty()) {
                         var lastNumberBefore = ""
+                        // 检查光标位置之前的字符，获取最后一个小数点之前的数字部分
                         if (cursorPosition > 0 && binding.input.text.toString()
                                 .substring(0, cursorPosition)
                                 .last() in "0123456789\\$decimalSeparatorSymbol"
                         ) {
+                            // 提取光标之前的数字部分
                             lastNumberBefore = NumberFormatter.extractNumbers(
                                 binding.input.text.toString().substring(0, cursorPosition),
                                 decimalSeparatorSymbol
                             ).last()
                         }
+                        // 检查光标位置之后的字符
                         var firstNumberAfter = ""
                         if (cursorPosition < binding.input.text.length - 1) {
+                            // 获取光标之后的第一个数字部分
                             firstNumberAfter = NumberFormatter.extractNumbers(
                                 binding.input.text.toString()
                                     .substring(cursorPosition, binding.input.text.length),
                                 decimalSeparatorSymbol
                             ).first()
                         }
+                        // 如果光标前后都有小数点，返回不执行后续操作
                         if (decimalSeparatorSymbol in lastNumberBefore || decimalSeparatorSymbol in firstNumberAfter) {
                             return@withContext
                         }
@@ -406,6 +439,60 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    /**
+     * 处理时间符号输入相关冲突
+     */
+    private fun timeConflict(old: String, new: String): Boolean {
+
+        //如果原有表达式已经包含时间符号
+        if (old.containsTimeSymbols()) {
+
+            //原有表达式不以时间符号结尾，但新值是计算符号
+            //例如8d30m5 和 + 冲突
+            if (!old.endWithTimeSymbol() && new.endWithCalcSymbol()) {
+                return true
+            }
+
+            //新值是冲突计算符号
+            if (new.containsTimeConflictSymbols()) {
+                return true
+            }
+        }
+
+        //如果新值是时间符号
+        if (new.isTimeSymbol()) {
+
+            //时间与符号冲突处理
+            if (old.containsTimeConflictSymbols()) {
+                return true
+            }
+
+            //如果原有表达式不是以数字结尾
+            if (!old.endWithNum()) {
+                return true
+            }
+
+            //如果原有表达式不包含时间符号却包含运算符
+            //8+90 与 h 冲突
+            if (!old.containsTimeSymbols() && old.containsCalcSymbols()) {
+                return true
+            }
+
+            //有s，不允许输入smh
+            //有m，不允许输入mh
+            //有h，不允许输入h
+            old.extractAfterLastOperator().let {
+                if (it.contains(secSymbol) ||
+                    it.contains(minSymbol) && (new == minSymbol || new == hourSymbol) ||
+                    it.contains(hourSymbol) && new == hourSymbol) {
+                    return true
+                }
+            }
+        }
+
+        return false
     }
 
     private fun roundResult(result: BigDecimal): BigDecimal {
@@ -459,6 +546,9 @@ class MainActivity : AppCompatActivity() {
         isDegreeModeActivated = !isDegreeModeActivated
     }
 
+    /**
+     * 更新计算结果
+     */
     private fun updateResultDisplay() {
         lifecycleScope.launch(Dispatchers.Default) {
             // Reset text color
@@ -478,6 +568,17 @@ class MainActivity : AppCompatActivity() {
                     decimalSeparatorSymbol,
                     groupingSeparatorSymbol
                 )
+
+                //时间计算
+                if (calculationTmp.containsTimeSymbols()) {
+                    val result = calculationTmp.calculateTimeExpression()
+                    withContext(Dispatchers.Main) {
+                        binding.resultDisplay.text = result
+                    }
+                    timeResult = result
+                    return@launch
+                }
+
                 calculationResult =
                     Calculator(MyPreferences(this@MainActivity).numberPrecision!!.toInt()).evaluate(
                         calculationTmp,
@@ -768,6 +869,22 @@ class MainActivity : AppCompatActivity() {
 
             val calculation = binding.input.text.toString()
 
+//            //时间计算
+//            if (calculation.containsTimeSymbols()) {
+//                val result = binding.resultDisplay.text.toString()
+//                if (error.equals(result)) {
+//                    withContext(Dispatchers.Main) {
+//                        binding.input.setText("")
+//                        binding.resultDisplay.text = ""
+//                    }
+//                } else {
+//                    withContext(Dispatchers.Main) {
+//                        binding.input.setText(result)
+//                    }
+//                }
+//                return@launch
+//            }
+
             if (calculation != "") {
 
                 val resultString = calculationResult.toString()
@@ -780,22 +897,29 @@ class MainActivity : AppCompatActivity() {
                 // If result is a number and it is finite
                 if (!(division_by_0 || domain_error || syntax_error || is_infinity || require_real_number)) {
 
-                    // Remove zeros at the end of the results (after point)
-                    val resultSplited = resultString.split('.')
-                    if (resultSplited.size > 1) {
-                        val resultPartAfterDecimalSeparator = resultSplited[1].trimEnd('0')
-                        var resultWithoutZeros = resultSplited[0]
-                        if (resultPartAfterDecimalSeparator != "") {
-                            resultWithoutZeros =
-                                resultSplited[0] + "." + resultPartAfterDecimalSeparator
+                    //时间计算
+                    if (calculation.containsTimeSymbols()) {
+                        formattedResult = binding.resultDisplay.text.toString()
+                    } else {
+                        // Remove zeros at the end of the results (after point)
+                        val resultSplited = resultString.split('.')
+                        if (resultSplited.size > 1) {
+                            val resultPartAfterDecimalSeparator = resultSplited[1].trimEnd('0')
+                            var resultWithoutZeros = resultSplited[0]
+                            if (resultPartAfterDecimalSeparator != "") {
+                                resultWithoutZeros =
+                                    resultSplited[0] + "." + resultPartAfterDecimalSeparator
+                            }
+                            formattedResult = NumberFormatter.format(
+                                resultWithoutZeros.replace(
+                                    ".",
+                                    decimalSeparatorSymbol
+                                ), decimalSeparatorSymbol, groupingSeparatorSymbol
+                            )
                         }
-                        formattedResult = NumberFormatter.format(
-                            resultWithoutZeros.replace(
-                                ".",
-                                decimalSeparatorSymbol
-                            ), decimalSeparatorSymbol, groupingSeparatorSymbol
-                        )
                     }
+
+
 
                     // Hide the cursor before updating binding.input to avoid weird cursor movement
                     withContext(Dispatchers.Main) {
@@ -1007,6 +1131,18 @@ class MainActivity : AppCompatActivity() {
 
     fun scientistModeSwitchButton(view: View) {
         enableOrDisableScientistMode()
+    }
+
+    fun hourButton(view: View) {
+        updateDisplay(view, hourSymbol)
+    }
+
+    fun minButton(view: View) {
+        updateDisplay(view, minSymbol)
+    }
+
+    fun secButton(view: View) {
+        updateDisplay(view, secSymbol)
     }
 
     // Update settings

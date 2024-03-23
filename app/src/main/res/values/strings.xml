@@ -26,6 +26,10 @@
     <string name="add" translatable="false">+</string>
     <string name="equals" translatable="false">=</string>
 
+    <string name="hour" translatable="false">hour</string>
+    <string name="min" translatable="false">min</string>
+    <string name="sec" translatable="false">sec</string>
+
     <string name="square" translatable="false">√</string>
     <string name="squareInv" translatable="false">x²</string>
     <string name="squareInvModuloVersion" translatable="false">#</string>
