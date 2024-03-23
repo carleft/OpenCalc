@@ -1,13 +1,12 @@
 package com.tb.opencalculator.stat
 
+import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.FileProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.room.Room
 import com.tb.opencalculator.R
@@ -43,8 +42,7 @@ class StatActivity : AppCompatActivity() {
         initDB()
         initDatePicker()
         initTimePicker()
-//        //限制只输入数字
-//        binding.workTimes.setInputType(InputType.TYPE_CLASS_NUMBER);
+        updateCount()
     }
 
     /**
@@ -77,6 +75,24 @@ class StatActivity : AppCompatActivity() {
             )
             datePickerDialog.show()
         }
+
+        binding.deleteDatePicker.setOnClickListener {
+            val calendar: Calendar = Calendar.getInstance()
+            val curYear: Int = calendar.get(Calendar.YEAR)
+            val curMonth: Int = calendar.get(Calendar.MONTH)
+            val curDay: Int = calendar.get(Calendar.DAY_OF_MONTH)
+
+            val datePickerDialog = DatePickerDialog(
+                this@StatActivity, { _, year, month, dayOfMonth ->
+//                    val selectedDate = year.toString() + "-" + (month + 1) + "-" + dayOfMonth
+                    val selectedDate = date2Str(year, month, dayOfMonth)
+                    binding.deleteDatePicker.apply {
+                        setText(selectedDate)
+                    }
+                }, curYear, curMonth, curDay
+            )
+            datePickerDialog.show()
+        }
     }
 
     /**
@@ -97,25 +113,31 @@ class StatActivity : AppCompatActivity() {
         }
     }
 
+    private fun updateCount() {
+        lifecycleScope.launch {
+            val count = Dispatchers.IO.invoke {
+                db.workRecordDao().getCount()
+            }
+            binding.recordCount.text = "已保存${count}条数据"
+            binding.recordCount.visibility = View.VISIBLE
+        }
+    }
+
     /**
      * 保存记录到数据库中
      */
-    fun saveData(view: View) {
+    fun save(view: View) {
         lifecycleScope.launch {
-            val date =
-                binding.datePicker.text?.toString().validateAndAssign("日期", this@StatActivity)
-                    ?: return@launch
-            val workstation =
-                binding.workstationId.text?.toString().validateAndAssign(
-                    fieldName = "工号",
-                    activity = this@StatActivity
-                )
-                    ?: return@launch
+            val date = binding.datePicker.text?.toString().validateAndAssign("日期", this@StatActivity) ?: return@launch
+            val workIndex = binding.workIndex.text?.toString()?.toIntOrNull() ?: run {
+                toast("序号不可为空！")
+                return@launch
+            }
+            val workstation = binding.workstationId.text?.toString().validateAndAssign("工位", this@StatActivity) ?: return@launch
             val duration = binding.timePicker.getTag(viewTag) as? Int ?: run {
                 toast("时长不可为空！")
                 return@launch
             }
-
             val times = binding.workTimes.text?.toString()?.toIntOrNull() ?: run {
                 toast("工作次数不可为空！")
                 return@launch
@@ -126,16 +148,26 @@ class StatActivity : AppCompatActivity() {
 
             val workRecord = WorkRecord(
                 date = date,
+                index = workIndex,
                 workstation = workstation,
                 duration = duration,
                 isOvertime = isOvertime,
                 content = workContent,
                 times = times
             )
-            Dispatchers.IO.invoke {
+
+            val insert = Dispatchers.IO.invoke {
                 db.workRecordDao().insert(workRecord)
             }
-            toast("日期：$date, 工位：$workstation, 时长：$duration, 是否为加班：$isOvertime")
+            if (insert == -1L) {
+                toast("已有重复记录！")
+            } else {
+                toast("日期：$date, 工位：$workstation, 时长：$duration, 是否为加班：$isOvertime")
+            }
+
+            //更新数据条数
+            updateCount()
+
         }
     }
 
@@ -151,7 +183,7 @@ class StatActivity : AppCompatActivity() {
             val sheet: WritableSheet = workbook.createSheet("Data", 0)
 
             // 添加表头
-            val headers = arrayOf("日期", "工位", "工作时长", "工作次数", "班次", "工作内容", "白班时间", "白班次数", "夜班时间", "夜班次数", "总累计时间", "总累计次数")
+            val headers = arrayOf("日期", "序号", "工位", "工作时长", "工作次数", "班次", "工作内容", "白班时间", "白班次数", "夜班时间", "夜班次数", "总累计时间", "总累计次数")
             for ((index, header) in headers.withIndex()) {
                 val label = Label(index, 0, header)
                 sheet.addCell(label)
@@ -219,63 +251,67 @@ class StatActivity : AppCompatActivity() {
                         Log.e(TAG, "key = ${monthMap.key}, record = $record, row = $row" )
                         //日期
                         sheet.addCell(Label(0, row, record.date))
+                        //序号
+                        sheet.addCell(Label(1, row, record.index.toString()))
                         //工位
-                        sheet.addCell(Label(1, row, record.workstation))
+                        sheet.addCell(Label(2, row, record.workstation))
                         //工作时长
-                        sheet.addCell(Label(2, row, record.duration.formatTime()))
+                        sheet.addCell(Label(3, row, record.duration.formatTime()))
                         //工作次数
-                        sheet.addCell(Label(3, row, record.times.toString()))
+                        sheet.addCell(Label(4, row, record.times.toString()))
                         //班次
-                        sheet.addCell(Label(4, row, if (record.isOvertime) "夜班" else "白班"))
+                        sheet.addCell(Label(5, row, if (record.isOvertime) "夜班" else "白班"))
                         //工作内容
-                        sheet.addCell(Label(5, row, record.content))
+                        sheet.addCell(Label(6, row, record.content))
                         //TODO:累加
                         //白班时间
                         monthLightDurationAcc += if (record.isOvertime) 0 else record.duration
-                        sheet.addCell(Label(6, row, if (record.isOvertime) "" else monthLightDurationAcc.formatTime()))
+                        sheet.addCell(Label(7, row, if (record.isOvertime) "" else monthLightDurationAcc.formatTime()))
                         //白班次数
                         monthLightTimesAcc += if (record.isOvertime) 0 else record.times
-                        sheet.addCell(Label(7, row, if (record.isOvertime) "" else monthLightTimesAcc.toString()))
+                        sheet.addCell(Label(8, row, if (record.isOvertime) "" else monthLightTimesAcc.toString()))
                         //夜班时间
                         monthNightDurationAcc += if (record.isOvertime) record.duration else 0
-                        sheet.addCell(Label(8, row, if (record.isOvertime) monthNightDurationAcc.formatTime() else ""))
+                        sheet.addCell(Label(9, row, if (record.isOvertime) monthNightDurationAcc.formatTime() else ""))
                         //夜班次数
                         monthNightTimesAcc += if (record.isOvertime) record.times else 0
-                        sheet.addCell(Label(9, row, if (record.isOvertime) monthNightTimesAcc.toString() else ""))
+                        sheet.addCell(Label(10, row, if (record.isOvertime) monthNightTimesAcc.toString() else ""))
                         //总累计时间
                         monthDurationAcc += record.duration
-                        sheet.addCell(Label(10, row, monthDurationAcc.formatTime()))
+                        sheet.addCell(Label(11, row, monthDurationAcc.formatTime()))
                         //总累计次数
                         monthTimesAcc += record.times
-                        sheet.addCell(Label(11, row, monthTimesAcc.toString()))
+                        sheet.addCell(Label(12, row, monthTimesAcc.toString()))
                     }
                     //输出月累计
                     index += 2
                     val row = index
                     //日期
                     sheet.addCell(Label(0, row, "${monthMap.key}月总结"))
-                    //工位
+                    //序号
                     sheet.addCell(Label(1, row, ""))
+                    //工位
+                    sheet.addCell(Label(2, row, ""))
                     //工作时长
-                    sheet.addCell(Label(2, row, monthDurationAcc.formatTime()))
+                    sheet.addCell(Label(3, row, monthDurationAcc.formatTime()))
                     //工作次数
-                    sheet.addCell(Label(3, row, monthTimesAcc.toString()))
+                    sheet.addCell(Label(4, row, monthTimesAcc.toString()))
                     //班次
-                    sheet.addCell(Label(4, row, ""))
-                    //工作内容
                     sheet.addCell(Label(5, row, ""))
+                    //工作内容
+                    sheet.addCell(Label(6, row, ""))
                     //白班时间
-                    sheet.addCell(Label(6, row, monthLightDurationAcc.formatTime()))
+                    sheet.addCell(Label(7, row, monthLightDurationAcc.formatTime()))
                     //白班次数
-                    sheet.addCell(Label(7, row, monthLightTimesAcc.toString()))
+                    sheet.addCell(Label(8, row, monthLightTimesAcc.toString()))
                     //夜班时间
-                    sheet.addCell(Label(8, row, monthNightDurationAcc.formatTime()))
+                    sheet.addCell(Label(9, row, monthNightDurationAcc.formatTime()))
                     //夜班次数
-                    sheet.addCell(Label(9, row, monthNightTimesAcc.toString()))
+                    sheet.addCell(Label(10, row, monthNightTimesAcc.toString()))
                     //总累计时间
-                    sheet.addCell(Label(10, row, monthDurationAcc.formatTime()))
+                    sheet.addCell(Label(11, row, monthDurationAcc.formatTime()))
                     //总累计次数
-                    sheet.addCell(Label(11, row, monthTimesAcc.toString()))
+                    sheet.addCell(Label(12, row, monthTimesAcc.toString()))
                     index ++
 
                     //年度累加
@@ -291,33 +327,33 @@ class StatActivity : AppCompatActivity() {
                 val row = index
                 //日期
                 sheet.addCell(Label(0, row, "${yearMap.key}全年总结"))
-                //工位
+                //序号
                 sheet.addCell(Label(1, row, ""))
+                //工位
+                sheet.addCell(Label(2, row, ""))
                 //工作时长
-                sheet.addCell(Label(2, row, yearDurationAcc.formatTime()))
+                sheet.addCell(Label(3, row, yearDurationAcc.formatTime()))
                 //工作次数
-                sheet.addCell(Label(3, row, yearTimesAcc.toString()))
+                sheet.addCell(Label(4, row, yearTimesAcc.toString()))
                 //班次
-                sheet.addCell(Label(4, row, ""))
-                //工作内容
                 sheet.addCell(Label(5, row, ""))
+                //工作内容
+                sheet.addCell(Label(6, row, ""))
                 //白班时间
-                sheet.addCell(Label(6, row, yearLightDurationAcc.formatTime()))
+                sheet.addCell(Label(7, row, yearLightDurationAcc.formatTime()))
                 //白班次数
-                sheet.addCell(Label(7, row, yearLightTimesAcc.toString()))
+                sheet.addCell(Label(8, row, yearLightTimesAcc.toString()))
                 //夜班时间
-                sheet.addCell(Label(8, row, yearNightDurationAcc.formatTime()))
+                sheet.addCell(Label(9, row, yearNightDurationAcc.formatTime()))
                 //夜班次数
-                sheet.addCell(Label(9, row, yearNightTimesAcc.toString()))
+                sheet.addCell(Label(10, row, yearNightTimesAcc.toString()))
                 //总累计时间
-                sheet.addCell(Label(10, row, yearDurationAcc.formatTime()))
+                sheet.addCell(Label(11, row, yearDurationAcc.formatTime()))
                 //总累计次数
-                sheet.addCell(Label(11, row, yearTimesAcc.toString()))
+                sheet.addCell(Label(12, row, yearTimesAcc.toString()))
                 index ++
 
             }
-
-
 
             // 写入数据后关闭工作簿
             workbook.write()
@@ -329,20 +365,50 @@ class StatActivity : AppCompatActivity() {
         }
     }
 
-    fun openExcelPath(view: View) {
-        val filePath = File(this@StatActivity.getExternalFilesDir(null), "") ?: return
-        val uri = FileProvider.getUriForFile(
-            this@StatActivity,
-            applicationContext.packageName + ".fileProvider",
-            filePath
-        )
-        // 创建一个Intent，指定ACTION_VIEW操作以打开Excel文件
-        val intent = Intent(Intent.ACTION_VIEW)
-        // 设置文件的类型为Excel
-        intent.setDataAndType(uri, "application/vnd.ms-excel")
-        // 添加Flag以确保Intent在外部应用中启动
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        startActivity(intent)
+    /**
+     * 删除记录
+     */
+    fun delete(view: View) {
+        lifecycleScope.launch {
+            val date = binding.deleteDatePicker.text?.toString().validateAndAssign("日期", this@StatActivity) ?: return@launch
+            val workIndex = binding.deleteWorkIndex.text?.toString()?.toIntOrNull() ?: run {
+                toast("序号不可为空！")
+                return@launch
+            }
+            val workRecord = Dispatchers.IO.invoke {
+                db.workRecordDao().find(date, workIndex)
+            }
+
+            workRecord?.let {
+                //弹出Dialog
+                AlertDialog.Builder(this@StatActivity)
+                    .setTitle("删除确认")
+                    .setMessage("确定要删除这一条记录？\n $it")
+                    .setPositiveButton("确认") { dialogInterface, _ ->
+                        lifecycleScope.launch {
+                            val result = Dispatchers.IO.invoke {
+                                db.workRecordDao().delete(it)
+                            }
+                            dialogInterface.dismiss();
+                            if (result > 0) {
+                                toast("删除成功！")
+                            } else {
+                                toast("删除失败！")
+                            }
+                        }
+                    }
+                    .setNegativeButton("取消") { dialogInterface, _ ->
+                        dialogInterface.dismiss()
+                    }
+                    .create()
+                    .show()
+            } ?: run {
+                toast("未找到对应记录，删除失败！")
+            }
+
+            //更新数据条数
+            updateCount()
+        }
     }
 
 }

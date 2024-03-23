@@ -2,13 +2,18 @@ package com.tb.opencalculator.stat
 
 import android.app.Activity
 import android.widget.Toast
+import java.lang.ref.WeakReference
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
-
+var toast: WeakReference<Toast>? = null
 fun Activity.toast(message: String) {
-    Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+    toast?.get()?.cancel()
+    toast = Toast.makeText(this, message, Toast.LENGTH_LONG).let {
+        it.show()
+        WeakReference(it)
+    }
 }
 
 

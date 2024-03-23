@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.HapticFeedbackConstants
 import android.view.MenuItem
 import android.view.View
@@ -172,17 +173,17 @@ class MainActivity : AppCompatActivity() {
             screenWidthPX - (binding.input.paddingRight + binding.input.paddingLeft) // remove the paddingHorizontal
 
         // Do not clear after equal button if you move the cursor
-        binding.input.accessibilityDelegate = object : View.AccessibilityDelegate() {
-            override fun sendAccessibilityEvent(host: View, eventType: Int) {
-                super.sendAccessibilityEvent(host, eventType)
-                if (eventType == AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED) {
-                    isEqualLastAction = false
-                }
-//                if (!binding.input.isCursorVisible) {
-//                    binding.input.isCursorVisible = true
+//        binding.input.accessibilityDelegate = object : View.AccessibilityDelegate() {
+//            override fun sendAccessibilityEvent(host: View, eventType: Int) {
+//                super.sendAccessibilityEvent(host, eventType)
+//                if (eventType == AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED) {
+//                    isEqualLastAction = false
 //                }
-            }
-        }
+////                if (!binding.input.isCursorVisible) {
+////                    binding.input.isCursorVisible = true
+////                }
+//            }
+//        }
 
         // LongClick on result to copy it
         binding.resultDisplay.setOnLongClickListener {
@@ -342,15 +343,10 @@ class MainActivity : AppCompatActivity() {
         // 如果上一个符号是等号
         // Reset input with current number if following "equal"
         if (isEqualLastAction) {
-            if (isValueInt || value == decimalSeparatorSymbol) {
+            if ((isValueInt || value == decimalSeparatorSymbol)) {
                 //上一个符号是等号且输入是数字或者小数点，则先清空
                 //例如上次算了7+8=15，再点6的话，会先清空，之后再输出6
                 binding.input.setText("")
-            } else {
-                //否则将光标移动到最右侧
-                //例如我上次算了7+8=15，再点+的话，会保留15并且直接将光标移动到最后，之后再输出+
-                binding.input.setSelection(binding.input.text.length)
-                binding.inputHorizontalScrollView.fullScroll(HorizontalScrollView.FOCUS_RIGHT)
             }
             isEqualLastAction = false
         }
@@ -430,14 +426,16 @@ class MainActivity : AppCompatActivity() {
 
                 // Update Display
                 binding.input.setText(newValueFormatted)
+                binding.input.setSelection(binding.input.text.length)
+//                binding.inputHorizontalScrollView.fullScroll(HorizontalScrollView.FOCUS_RIGHT)
 
-                // Set cursor position
-                if (isValueInt) {
-                    val cursorOffset = newValueFormatted.length - newValue.length
-                    binding.input.setSelection(cursorPosition + value.length + cursorOffset)
-                } else {
-                    binding.input.setSelection(leftValueFormatted.length + value.length)
-                }
+//                // Set cursor position
+//                if (isValueInt) {
+//                    val cursorOffset = newValueFormatted.length - newValue.length
+//                    binding.input.setSelection(cursorPosition + value.length + cursorOffset)
+//                } else {
+//                    binding.input.setSelection(leftValueFormatted.length + value.length)
+//                }
             }
         }
     }
@@ -492,6 +490,10 @@ class MainActivity : AppCompatActivity() {
                     return true
                 }
             }
+        }
+
+        if (old.extractAfterLastOperator().contains(secSymbol) && new.toIntOrNull() != null) {
+            return true;
         }
 
         return false
@@ -576,6 +578,7 @@ class MainActivity : AppCompatActivity() {
                     val result = calculationTmp.calculateTimeExpression()
                     withContext(Dispatchers.Main) {
                         if (!isEqualLastAction) {
+                            Log.e("TB0232", "update resultDisplay, isEqualLastAction:$isEqualLastAction")
                             binding.resultDisplay.text = result
                         }
                     }
@@ -873,25 +876,12 @@ class MainActivity : AppCompatActivity() {
 
             val calculation = binding.input.text.toString()
 
-//            //时间计算
-//            if (calculation.containsTimeSymbols()) {
-//                val result = binding.resultDisplay.text.toString()
-//                if (error.equals(result)) {
-//                    withContext(Dispatchers.Main) {
-//                        binding.input.setText("")
-//                        binding.resultDisplay.text = ""
-//                    }
-//                } else {
-//                    withContext(Dispatchers.Main) {
-//                        binding.input.setText(result)
-//                    }
-//                }
-//                return@launch
-//            }
-
             if (calculation != "") {
-
-                val resultString = calculationResult.toString()
+                val resultString = if (calculation.containsTimeSymbols()) {
+                    timeResult
+                } else {
+                    calculationResult.toString()
+                }
                 var formattedResult = NumberFormatter.format(
                     resultString.replace(".", decimalSeparatorSymbol),
                     decimalSeparatorSymbol,
@@ -900,11 +890,11 @@ class MainActivity : AppCompatActivity() {
 
                 // If result is a number and it is finite
                 if (!(division_by_0 || domain_error || syntax_error || is_infinity || require_real_number)) {
+                    Log.e("TB0232", "equalsButton in")
+                    isEqualLastAction = true
 
-                    //时间计算
-                    if (calculation.containsTimeSymbols()) {
-                        formattedResult = binding.resultDisplay.text.toString()
-                    } else {
+                    //时间计算不更新
+                    if (!calculation.containsTimeSymbols())  {
                         // Remove zeros at the end of the results (after point)
                         val resultSplited = resultString.split('.')
                         if (resultSplited.size > 1) {
@@ -931,7 +921,9 @@ class MainActivity : AppCompatActivity() {
                     }
 
                     // Display result
-                    withContext(Dispatchers.Main) { binding.input.setText(formattedResult) }
+                    withContext(Dispatchers.Main) {
+                        if (calculation != formattedResult) binding.input.setText(formattedResult)
+                    }
 
                     // Set cursor
                     withContext(Dispatchers.Main) {
@@ -941,6 +933,7 @@ class MainActivity : AppCompatActivity() {
                         // Hide the cursor (do not remove this, it's not a duplicate)
                         binding.input.isCursorVisible = false
 
+                        Log.e("TB0232", "clear resultDisplay")
                         // Clear resultDisplay
                         binding.resultDisplay.text = ""
                     }
@@ -1011,8 +1004,7 @@ class MainActivity : AppCompatActivity() {
                             //    binding.resultDisplay.setText(getString(R.string.math_error))
                         } else {
                             binding.resultDisplay.text = formattedResult
-                            isEqualLastAction =
-                                true // Do not clear the calculation (if you click into a number) if there is an error
+                            isEqualLastAction = true // Do not clear the calculation (if you click into a number) if there is an error
                         }
                     }
                 }

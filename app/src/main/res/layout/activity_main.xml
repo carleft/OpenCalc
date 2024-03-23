@@ -9,7 +9,7 @@
 
     tools:context="com.tb.opencalculator.MainActivity">
 
-    <HorizontalScrollView
+    <LinearLayout
         android:id="@+id/inputHorizontalScrollView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -37,7 +37,7 @@
             android:textSize="55sp"
             tools:ignore="RtlCompat" />
 
-    </HorizontalScrollView>
+    </LinearLayout>
 
     <!-- <EditText
         android:id="@+id/resultDisplay"
