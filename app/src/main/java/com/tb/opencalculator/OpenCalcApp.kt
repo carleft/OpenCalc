@@ -1,4 +1,4 @@
-package com.darkempire78.opencalculator
+package com.tb.opencalculator
 
 import android.app.Application
 import androidx.appcompat.app.AppCompatDelegate.*

@@ -1,4 +1,4 @@
-package com.darkempire78.opencalculator
+package com.tb.opencalculator
 
 import android.animation.LayoutTransition
 import android.annotation.SuppressLint
@@ -23,9 +23,10 @@ import androidx.appcompat.widget.PopupMenu
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.darkempire78.opencalculator.databinding.ActivityMainBinding
-import com.darkempire78.opencalculator.stat.StatActivity
-import com.darkempire78.opencalculator.timecalc.*
+import com.tb.opencalculator.R
+import com.tb.opencalculator.databinding.ActivityMainBinding
+import com.tb.opencalculator.stat.StatActivity
+import com.tb.opencalculator.timecalc.*
 import com.sothree.slidinguppanel.PanelSlideListener
 import com.sothree.slidinguppanel.PanelState
 import kotlinx.coroutines.Dispatchers
@@ -486,7 +487,8 @@ class MainActivity : AppCompatActivity() {
             old.extractAfterLastOperator().let {
                 if (it.contains(secSymbol) ||
                     it.contains(minSymbol) && (new == minSymbol || new == hourSymbol) ||
-                    it.contains(hourSymbol) && new == hourSymbol) {
+                    it.contains(hourSymbol) && new == hourSymbol
+                ) {
                     return true
                 }
             }
@@ -573,7 +575,9 @@ class MainActivity : AppCompatActivity() {
                 if (calculationTmp.containsTimeSymbols()) {
                     val result = calculationTmp.calculateTimeExpression()
                     withContext(Dispatchers.Main) {
-                        binding.resultDisplay.text = result
+                        if (!isEqualLastAction) {
+                            binding.resultDisplay.text = result
+                        }
                     }
                     timeResult = result
                     return@launch

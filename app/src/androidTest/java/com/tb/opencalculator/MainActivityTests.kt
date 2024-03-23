@@ -1,8 +1,9 @@
-package com.darkempire78.opencalculator
+package com.tb.opencalculator
 
 import android.content.pm.ActivityInfo
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.tb.opencalculator.MainActivity
 import org.junit.Test
 import org.junit.runner.RunWith
 

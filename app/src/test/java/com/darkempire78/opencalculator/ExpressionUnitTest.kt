@@ -1,5 +1,7 @@
-package com.darkempire78.opencalculator
+package com.tb.opencalculator
 
+import com.tb.opencalculator.Calculator
+import com.tb.opencalculator.Expression
 import org.junit.Assert.assertEquals
 import org.junit.BeforeClass
 import org.junit.Test

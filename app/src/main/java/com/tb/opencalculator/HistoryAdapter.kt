@@ -1,4 +1,4 @@
-package com.darkempire78.opencalculator
+package com.tb.opencalculator
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -11,6 +11,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
+import com.tb.opencalculator.R
 
 class HistoryAdapter(
     private var history: MutableList<History>,

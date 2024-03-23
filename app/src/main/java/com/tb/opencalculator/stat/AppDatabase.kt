@@ -1,4 +1,4 @@
-package com.darkempire78.opencalculator.stat
+package com.tb.opencalculator.stat
 
 import androidx.room.Database
 import androidx.room.RoomDatabase

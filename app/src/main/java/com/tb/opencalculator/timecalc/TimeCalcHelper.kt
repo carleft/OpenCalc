@@ -1,4 +1,4 @@
-package com.darkempire78.opencalculator.timecalc
+package com.tb.opencalculator.timecalc
 
 import java.lang.StringBuilder
 
@@ -16,7 +16,9 @@ fun String?.isTimeSymbol() = equals(hourSymbol) || equals(minSymbol) || equals(s
 /**
  * 判断最后一位是否为TimeSymbol
  */
-fun String?.endWithTimeSymbol() = this?.run{ endsWith(hourSymbol) || endsWith(minSymbol) || endsWith(secSymbol) } ?: false
+fun String?.endWithTimeSymbol() = this?.run{ endsWith(hourSymbol) || endsWith(minSymbol) || endsWith(
+    secSymbol
+) } ?: false
 
 /**
  * 判断最后一位是否为计算符号

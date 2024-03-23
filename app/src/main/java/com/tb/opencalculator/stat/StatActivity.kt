@@ -1,4 +1,4 @@
-package com.darkempire78.opencalculator.stat
+package com.tb.opencalculator.stat
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
@@ -10,8 +10,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.room.Room
-import com.darkempire78.opencalculator.R
-import com.darkempire78.opencalculator.databinding.ActivityStatBinding
+import com.tb.opencalculator.R
+import com.tb.opencalculator.databinding.ActivityStatBinding
 import jxl.Workbook
 import jxl.write.Label
 import jxl.write.WritableSheet

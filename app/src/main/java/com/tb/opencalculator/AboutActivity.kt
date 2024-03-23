@@ -1,4 +1,4 @@
-package com.darkempire78.opencalculator
+package com.tb.opencalculator
 
 import android.content.Intent
 import android.net.Uri
@@ -6,7 +6,8 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import com.darkempire78.opencalculator.databinding.ActivityAboutBinding
+import com.tb.opencalculator.R
+import com.tb.opencalculator.databinding.ActivityAboutBinding
 
 class AboutActivity : AppCompatActivity() {
     private lateinit var binding: ActivityAboutBinding
@@ -55,7 +56,7 @@ class AboutActivity : AppCompatActivity() {
         binding.aboutRate.setOnClickListener {
             val browserIntent = Intent(
                 Intent.ACTION_VIEW,
-                Uri.parse("https://play.google.com/store/apps/details?id=com.darkempire78.opencalculator")
+                Uri.parse("https://play.google.com/store/apps/details?id=com.tb.opencalculator")
             )
             startActivity(browserIntent)
         }

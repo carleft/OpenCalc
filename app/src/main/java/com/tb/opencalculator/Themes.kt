@@ -1,10 +1,11 @@
-package com.darkempire78.opencalculator
+package com.tb.opencalculator
 
 import android.app.Activity
 import android.content.Context
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.startActivity
+import com.tb.opencalculator.R
 import com.google.android.material.color.DynamicColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 

@@ -1,4 +1,4 @@
-package com.darkempire78.opencalculator.stat
+package com.tb.opencalculator.stat
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

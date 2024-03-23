@@ -21,10 +21,10 @@
 
 <br>
 
-<a href="https://play.google.com/store/apps/details?id=com.darkempire78.opencalculator">
+<a href="https://play.google.com/store/apps/details?id=com.tb.opencalculator">
       <img alt="Get it on Google Play" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" height="100">
 </a>
-<a href="https://f-droid.org/en/packages/com.darkempire78.opencalculator">
+<a href="https://f-droid.org/en/packages/com.tb.opencalculator">
       <img alt="Get it on F-Droid" src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" height="100">
 </a>
 <a href="https://github.com/Darkempire78/OpenCalc/releases/latest">
